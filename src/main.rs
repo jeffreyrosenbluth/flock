@@ -134,7 +134,7 @@ fn update(app: &App, m: &mut Model, _update: Update) {
                 m.boids.push(Boid::new(x, y));
             }
         }
-        if m.boids.len() > 0 {
+        if !m.boids.is_empty() {
             m.boids[0].highlight = true;
         }
     }

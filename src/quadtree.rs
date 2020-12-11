@@ -75,12 +75,10 @@ impl<T: Position + Clone> QNode<T> {
                         } else {
                             tl_quad.push(p.clone());
                         }
+                    } else if p.pos().y <= midy {
+                        br_quad.push(p.clone());
                     } else {
-                        if p.pos().y <= midy {
-                            br_quad.push(p.clone());
-                        } else {
-                            tr_quad.push(p.clone());
-                        }
+                        tr_quad.push(p.clone());
                     }
                 }
             }

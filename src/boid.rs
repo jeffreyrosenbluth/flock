@@ -1,5 +1,5 @@
-use nannou::prelude::*;
 use crate::quadtree::*;
+use nannou::prelude::*;
 
 pub const MAXFORCE: f32 = 0.06;
 pub const MAXSPEED: f32 = 2.5;
@@ -38,7 +38,7 @@ impl Boid {
 
     pub fn accumualte(
         &self,
-        boids: &Vec<Boid>,
+        boids: &[Boid],
         acc: impl Fn(&Boid) -> Vector2,
         steer: impl Fn(Vector2, f32) -> Vector2,
     ) -> Vector2 {
@@ -56,26 +56,26 @@ impl Boid {
         vec2(0.0, 0.0)
     }
 
-    pub fn align(&self, boids: &Vec<Boid>) -> Vector2 {
+    pub fn align(&self, boids: &[Boid]) -> Vector2 {
         let steer = |s: Vector2, c: f32| {
             ((s / c).with_magnitude(MAXSPEED) - self.velocity).limit_magnitude(MAXFORCE)
         };
         self.accumualte(boids, &|b: &Boid| b.velocity, &steer)
     }
 
-    pub fn separate(&self, boids: &Vec<Boid>, dist: f32) -> Vector2 {
+    pub fn separate(&self, boids: &[Boid], dist: f32) -> Vector2 {
         let acc = |b: &Boid| (self.position - b.position).with_magnitude(1. / dist);
         let steer = |s: Vector2, _c: f32| {
             if s.magnitude() > 0. {
-                return (s.with_magnitude(MAXSPEED) - self.velocity).limit_magnitude(MAXFORCE);
+                (s.with_magnitude(MAXSPEED) - self.velocity).limit_magnitude(MAXFORCE)
             } else {
-                return vec2(0., 0.);
+                vec2(0., 0.)
             }
         };
         self.accumualte(boids, &acc, &steer)
     }
 
-    pub fn cohesion(&self, boids: &Vec<Boid>) -> Vector2 {
+    pub fn cohesion(&self, boids: &[Boid]) -> Vector2 {
         let steer = |s: Vector2, c: f32| self.seek(s / c);
         self.accumualte(boids, &|b: &Boid| b.position, &steer)
     }
