@@ -1,5 +1,5 @@
-mod quadtree;
 mod boid;
+mod quadtree;
 
 use nannou::prelude::*;
 use nannou::ui::prelude::*;
@@ -41,6 +41,31 @@ widget_ids! {
     }
 }
 
+// fn boids_rand(n: usize, bl: Point2, tr: Point2) -> Vec<Boid> {
+//     let mut boids = Vec::new();
+//     for _ in 0..n {
+//         let x = random_range(bl.x, tr.x);
+//         let y = random_range(bl.y, tr.y);
+//         boids.push(Boid::new(x, y));
+//     }
+//     boids
+// }
+
+fn boids_circle(n: usize, radius: f32) -> Vec<Boid> {
+    let mut boids = Vec::new();
+    let delta = f32::PI() * 2.0 / n as f32;
+    let mut theta = 0.0;
+    for i in 0..n {
+        let x = radius * theta.cos() as f32;
+        let y = radius * theta.sin() as f32;
+        let z = if i % 2 == 0 { 1.0 } else { -1.0 };
+        let mut b = Boid::new(x, y);
+        b.velocity = vec2(z * x, -z * y).with_magnitude(1.0);
+        boids.push(b);
+        theta += delta;
+    }
+    boids
+}
 
 fn model(app: &App) -> Model {
     app.new_window()
@@ -50,16 +75,10 @@ fn model(app: &App) -> Model {
         .unwrap();
     let mut ui = app.new_ui().build().unwrap();
     let ids = Ids::new(ui.widget_id_generator());
-    let bl = app.window_rect().bottom_left();
-    let tr = app.window_rect().top_right();
 
-    let mut boids = Vec::new();
-    for _ in 0..1000 {
-        let x = random_range(bl.x, tr.x);
-        let y = random_range(bl.y, tr.y);
-        boids.push(Boid::new(x, y));
-    }
+    let mut boids = boids_circle(1000, 200.0);
     boids[0].highlight = true;
+
     let qtree = Box::new(QNode::Points(vec![]));
     let sep_strength = 1.5;
     let sep_radius = 25.0;
@@ -67,7 +86,8 @@ fn model(app: &App) -> Model {
     let ali_radius = 75.0;
     let coh_strength = 1.0;
     let coh_radius = 100.0;
-    let grid = true;
+    let grid = false;
+
     Model {
         boids,
         qtree,
@@ -114,6 +134,9 @@ fn update(app: &App, m: &mut Model, _update: Update) {
                 m.boids.push(Boid::new(x, y));
             }
         }
+        if m.boids.len() > 0 {
+            m.boids[0].highlight = true;
+        }
     }
 
     let sep_label = format!("Separation Strength {:.1}", m.sep_strength);
@@ -125,7 +148,7 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         m.sep_strength = value;
     }
 
-    let sep_label = format!("Separation  {:.0}", m.sep_radius);
+    let sep_label = format!("Separation Radius {:.0}", m.sep_radius);
     for value in slider(m.sep_radius, 0.0, 200.0)
         .down(10.0)
         .label(&sep_label[..])
@@ -186,6 +209,8 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         m.ali_radius = 75.0;
         m.coh_strength = 1.0;
         m.coh_radius = 100.0;
+        m.boids = boids_circle(m.boids.len(), 200.0);
+        m.boids[0].highlight = true;
     }
 
     let grid_label = if m.grid { "Grid Off" } else { "Grid On" };
@@ -232,6 +257,7 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         ali.push(boid.align(&ali_flock) * m.ali_strength);
         coh.push(boid.cohesion(&coh_flock) * m.coh_strength);
     }
+
     for (i, boid) in m.boids.iter_mut().enumerate() {
         boid.acceleration += sep[i] + ali[i] + coh[i];
         boid.borders(&app.window_rect());
@@ -301,9 +327,8 @@ fn display(boid: &Boid, draw: &Draw, m: &Model) {
     let mut c = PLUM;
     let r = *r;
     let clear = srgba(0.0, 0.0, 0.0, 0.0);
-    // let clear = with_opacity(BLACK, 0.0);
 
-    if *highlight {
+    if *highlight && m.grid {
         c = WHITE;
         draw.ellipse()
             .color(clear)

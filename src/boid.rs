@@ -1,8 +1,8 @@
 use nannou::prelude::*;
 use crate::quadtree::*;
 
-const MAXFORCE: f32 = 0.06;
-const MAXSPEED: f32 = 2.5;
+pub const MAXFORCE: f32 = 0.06;
+pub const MAXSPEED: f32 = 2.5;
 
 #[derive(Clone, PartialEq)]
 pub(crate) struct Boid {
