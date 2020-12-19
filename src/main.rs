@@ -247,7 +247,8 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         .bottom_left_with_margin(20.0)
         .w_h(150.0, 30.0)
         .font_size(12)
-        .text_color(color::Color::Rgba(0.83, 0.83, 0.85, 1.0))
+        .text_color(srgba(0.83, 0.83, 0.85, 1.0))
+        // .text_color(color::Color::Rgba(0.83, 0.83, 0.85, 1.0))
         .rgb(0.0, 0.0, 0.0)
         .set(m.ids.fps, ui);
 
