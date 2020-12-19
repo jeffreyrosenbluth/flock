@@ -3,6 +3,7 @@ use nannou::prelude::*;
 
 pub const MAXFORCE: f32 = 0.06;
 pub const MAXSPEED: f32 = 2.5;
+pub const ZERO2: Vector2 = Vector2 { x: 0.0, y: 0.0 };
 
 #[derive(Clone, PartialEq)]
 pub(crate) struct Boid {
@@ -21,8 +22,8 @@ impl Position for Boid {
 impl Boid {
     pub fn new(x: f32, y: f32) -> Self {
         let position = pt2(x, y);
-        let velocity = vec2(0.0, 0.0);
-        let acceleration = vec2(0.0, 0.0);
+        let velocity = ZERO2;
+        let acceleration = ZERO2;
         let highlight = false;
 
         Boid {
@@ -39,18 +40,14 @@ impl Boid {
         acc: impl Fn(&Boid) -> Vector2,
         steer: impl Fn(Vector2, f32) -> Vector2,
     ) -> Vector2 {
-        let mut sum = vec2(0.0, 0.0);
-        let mut count = 0.0;
-        for b in boids {
-            if b != self {
-                sum += acc(b);
-                count += 1.0;
-            }
-        }
-        if count > 0.0 {
-            return steer(sum, count);
-        }
-        vec2(0.0, 0.0)
+        let sum = boids.into_iter().fold(ZERO2, |mut a, b| {
+            a += if b != self { acc(b) } else { ZERO2 };
+            a
+        });
+        if boids.len() == 1 {
+            return ZERO2;
+        };
+        steer(sum, boids.len() as f32 - 1.0)
     }
 
     pub fn align(&self, boids: &[Boid]) -> Vector2 {
@@ -66,7 +63,7 @@ impl Boid {
             if s.magnitude() > 0. {
                 (s.with_magnitude(MAXSPEED) - self.velocity).limit_magnitude(MAXFORCE)
             } else {
-                vec2(0., 0.)
+                ZERO2
             }
         };
         self.accumualte(boids, &acc, &steer)
@@ -81,14 +78,14 @@ impl Boid {
         self.velocity += self.acceleration;
         self.velocity.limit_magnitude(MAXSPEED);
         self.position += self.velocity;
-        self.acceleration = vec2(0.0, 0.0);
+        self.acceleration = ZERO2;
     }
 
     fn seek(&self, target: Vector2) -> Vector2 {
-        let desired = target - self.position;
-        let desired = desired.with_magnitude(MAXSPEED);
-        let steer = desired - self.velocity;
-        steer.limit_magnitude(MAXFORCE)
+        let velocity = target - self.position;
+        let velocity = velocity.with_magnitude(MAXSPEED);
+        let acceleration = velocity - self.velocity;
+        acceleration.limit_magnitude(MAXFORCE)
     }
 
     pub fn borders(&mut self, win: &nannou::prelude::Rect) {

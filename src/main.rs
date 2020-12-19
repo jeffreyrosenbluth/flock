@@ -10,7 +10,7 @@ use crate::quadtree::*;
 
 const WIDTH: u32 = 1500;
 const HEIGHT: u32 = 1000;
-const COUNT: usize = 1000;
+const COUNT: usize = 600;
 const CIRCLE: f32 = 200.0;
 const SEPSTRENGTH: f32 = 1.5;
 const SEPRADIUS: f32 = 25.0;
@@ -289,7 +289,9 @@ fn view(app: &App, m: &Model, frame: Frame) {
     let tr = app.window_rect().top_right();
     let draw = app.draw();
     if m.trail {
-        draw.rect().wh(app.window_rect().wh()).color(srgba(0., 0., 0., 0.05));
+        draw.rect()
+            .wh(app.window_rect().wh())
+            .color(srgba(0., 0., 0., 0.05));
     } else {
         draw.background().color(BLACK);
     }
