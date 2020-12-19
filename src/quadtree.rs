@@ -82,7 +82,10 @@ impl<T: Position + Clone> QNode<T> {
                     }
                 }
             }
-            _ => panic!("Only Points Nodes can be split"),
+            _ => {
+                println!("Warning: Only QNode::Points should be split");
+                return
+            },
         }
         let quadrants = Quadrants::new(
             QNode::Points(bl_quad),

@@ -24,6 +24,7 @@ struct Model {
     coh_strength: f32,
     coh_radius: f32,
     grid: bool,
+    trail: bool,
 }
 
 widget_ids! {
@@ -38,18 +39,9 @@ widget_ids! {
         grid,
         fps,
         count,
+        trail,
     }
 }
-
-// fn boids_rand(n: usize, bl: Point2, tr: Point2) -> Vec<Boid> {
-//     let mut boids = Vec::new();
-//     for _ in 0..n {
-//         let x = random_range(bl.x, tr.x);
-//         let y = random_range(bl.y, tr.y);
-//         boids.push(Boid::new(x, y));
-//     }
-//     boids
-// }
 
 fn boids_circle(n: usize, radius: f32) -> Vec<Boid> {
     let mut boids = Vec::new();
@@ -87,6 +79,7 @@ fn model(app: &App) -> Model {
     let coh_strength = 1.0;
     let coh_radius = 100.0;
     let grid = false;
+    let trail = false;
 
     Model {
         boids,
@@ -100,6 +93,7 @@ fn model(app: &App) -> Model {
         coh_strength,
         coh_radius,
         grid,
+        trail,
     }
 }
 
@@ -227,6 +221,20 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         m.grid = !m.grid
     }
 
+    let trail_label = if m.trail { "Trail Off" } else { "Trail On" };
+    for _click in widget::Button::new()
+        .down(10.0)
+        .w_h(150.0, 30.0)
+        .label(trail_label)
+        .label_font_size(12)
+        .rgb(0.15, 0.15, 0.15)
+        .label_rgb(0.83, 0.83, 0.85)
+        .border(0.0)
+        .set(m.ids.trail, ui)
+    {
+        m.trail = !m.trail
+    }
+
     let fps_label = format!("fps {:.0}", app.fps().min(60.0));
     let _frame_rate = widget::TextBox::new(&fps_label[..])
         .bottom_left_with_margin(20.0)
@@ -269,7 +277,12 @@ fn view(app: &App, m: &Model, frame: Frame) {
     let bl = app.window_rect().bottom_left();
     let tr = app.window_rect().top_right();
     let draw = app.draw();
-    draw.background().color(BLACK);
+    if m.trail {
+        draw.rect().wh(app.window_rect().wh()).color(srgba(0., 0., 0., 0.05));
+    } else {
+        draw.background().color(BLACK);
+    }
+
     if m.grid {
         draw_qtree(m.qtree.clone(), bl, tr, &draw);
     }
@@ -286,10 +299,11 @@ fn centered_rect(bl: Point2, tr: Point2) -> (Point2, Point2) {
 
 fn draw_rect(bl: Point2, tr: Point2, draw: &Draw) {
     let (ctr, dims) = centered_rect(bl, tr);
+    let clear = srgba(0.0, 0.0, 0.0, 0.0);
     draw.rect()
         .xy(ctr)
         .wh(dims)
-        .color(BLACK)
+        .color(clear)
         .stroke_color(rgb8(37, 38, 39))
         .stroke_weight(1.0);
 }
@@ -325,10 +339,10 @@ fn display(boid: &Boid, draw: &Draw, m: &Model) {
 
     let theta = velocity.angle() + PI / 2.;
     let mut c = PLUM;
-    let r = *r;
+    let r = if m.trail { 1.0 } else { *r };
     let clear = srgba(0.0, 0.0, 0.0, 0.0);
 
-    if *highlight && m.grid {
+    if *highlight && m.grid && !m.trail {
         c = WHITE;
         draw.ellipse()
             .color(clear)
