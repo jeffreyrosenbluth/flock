@@ -9,7 +9,6 @@ pub(crate) struct Boid {
     pub position: Point2,
     pub velocity: Vector2,
     pub acceleration: Vector2,
-    pub r: f32,
     pub highlight: bool,
 }
 
@@ -24,14 +23,12 @@ impl Boid {
         let position = pt2(x, y);
         let velocity = vec2(0.0, 0.0);
         let acceleration = vec2(0.0, 0.0);
-        let r = 2.0;
         let highlight = false;
 
         Boid {
             position,
             velocity,
             acceleration,
-            r,
             highlight,
         }
     }
@@ -99,12 +96,11 @@ impl Boid {
         let r = win.right();
         let t = win.top();
         let b = win.bottom();
-        let rd = self.r;
         match self.position {
-            Vector2 { x, .. } if x < l - rd => self.position.x = r + rd,
-            Vector2 { y, .. } if y < b - rd => self.position.y = t + rd,
-            Vector2 { x, .. } if x > r + rd => self.position.x = l - rd,
-            Vector2 { y, .. } if y > t + rd => self.position.y = b - rd,
+            Vector2 { x, .. } if x < l => self.position.x = r,
+            Vector2 { y, .. } if y < b => self.position.y = t,
+            Vector2 { x, .. } if x > r => self.position.x = l,
+            Vector2 { y, .. } if y > t => self.position.y = b,
             _ => (),
         };
     }

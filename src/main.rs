@@ -8,6 +8,17 @@ use nannou::Draw;
 use crate::boid::*;
 use crate::quadtree::*;
 
+const WIDTH: u32 = 1500;
+const HEIGHT: u32 = 1000;
+const COUNT: usize = 1000;
+const CIRCLE: f32 = 200.0;
+const SEPSTRENGTH: f32 = 1.5;
+const SEPRADIUS: f32 = 25.0;
+const ALISTRENGTH: f32 = 1.0;
+const ALIRADIUS: f32 = 75.0;
+const COHSTRENGTH: f32 = 1.0;
+const COHRADIUS: f32 = 100.0;
+
 fn main() {
     nannou::app(model).update(update).run();
 }
@@ -61,23 +72,23 @@ fn boids_circle(n: usize, radius: f32) -> Vec<Boid> {
 
 fn model(app: &App) -> Model {
     app.new_window()
-        .size(1500, 1000)
+        .size(WIDTH, HEIGHT)
         .view(view)
         .build()
         .unwrap();
     let mut ui = app.new_ui().build().unwrap();
     let ids = Ids::new(ui.widget_id_generator());
 
-    let mut boids = boids_circle(1000, 200.0);
+    let mut boids = boids_circle(COUNT, CIRCLE);
     boids[0].highlight = true;
 
     let qtree = Box::new(QNode::Points(vec![]));
-    let sep_strength = 1.5;
-    let sep_radius = 25.0;
-    let ali_strength = 1.0;
-    let ali_radius = 75.0;
-    let coh_strength = 1.0;
-    let coh_radius = 100.0;
+    let sep_strength = SEPSTRENGTH;
+    let sep_radius = SEPRADIUS;
+    let ali_strength = ALISTRENGTH;
+    let ali_radius = ALIRADIUS;
+    let coh_strength = COHSTRENGTH;
+    let coh_radius = COHRADIUS;
     let grid = false;
     let trail = false;
 
@@ -332,14 +343,13 @@ fn display(boid: &Boid, draw: &Draw, m: &Model) {
     let Boid {
         position,
         velocity,
-        r,
         highlight,
         ..
     } = boid;
 
     let theta = velocity.angle() + PI / 2.;
     let mut c = PLUM;
-    let r = if m.trail { 1.0 } else { *r };
+    let r = if m.trail { 1.0 } else { 2.0 };
     let clear = srgba(0.0, 0.0, 0.0, 0.0);
 
     if *highlight && m.grid && !m.trail {
