@@ -40,7 +40,7 @@ impl Boid {
         acc: impl Fn(&Boid) -> Vector2,
         steer: impl Fn(Vector2, f32) -> Vector2,
     ) -> Vector2 {
-        let sum = boids.into_iter().fold(ZERO2, |mut a, b| {
+        let sum = boids.into_iter().fold_first(|mut a, b| {
             a += if b != self { acc(b) } else { ZERO2 };
             a
         });
