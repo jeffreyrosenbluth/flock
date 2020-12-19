@@ -10,7 +10,7 @@ use crate::quadtree::*;
 
 const WIDTH: u32 = 1500;
 const HEIGHT: u32 = 1000;
-const COUNT: usize = 600;
+const COUNT: usize = 1000;
 const CIRCLE: f32 = 200.0;
 const SEPSTRENGTH: f32 = 1.5;
 const SEPRADIUS: f32 = 25.0;
@@ -38,6 +38,25 @@ struct Model {
     trail: bool,
 }
 
+impl Model {
+    fn new(boids: Vec<Boid>, ui: Ui, ids: Ids) -> Self {
+        Self {
+            boids,
+            qtree: Box::new(QNode::Points(vec![])),
+            ui,
+            ids,
+            sep_strength: SEPSTRENGTH,
+            sep_radius: SEPRADIUS,
+            ali_strength: ALISTRENGTH,
+            ali_radius: ALIRADIUS,
+            coh_strength: COHSTRENGTH,
+            coh_radius: COHRADIUS,
+            grid: false,
+            trail: false,
+        }
+    }
+}
+
 widget_ids! {
     struct Ids {
         sep_strength,
@@ -63,7 +82,7 @@ fn boids_circle(n: usize, radius: f32) -> Vec<Boid> {
         let y = radius * theta.sin() as f32;
         let z = if i % 2 == 0 { 1.0 } else { -1.0 };
         let mut b = Boid::new(x, y);
-        b.velocity = vec2(z * x, -z * y).with_magnitude(1.0);
+        b.velocity = vec2(z * x, -z * y).limit_magnitude(1.0);
         boids.push(b);
         theta += delta;
     }
@@ -76,36 +95,13 @@ fn model(app: &App) -> Model {
         .view(view)
         .build()
         .unwrap();
+
     let mut ui = app.new_ui().build().unwrap();
     let ids = Ids::new(ui.widget_id_generator());
-
     let mut boids = boids_circle(COUNT, CIRCLE);
     boids[0].highlight = true;
 
-    let qtree = Box::new(QNode::Points(vec![]));
-    let sep_strength = SEPSTRENGTH;
-    let sep_radius = SEPRADIUS;
-    let ali_strength = ALISTRENGTH;
-    let ali_radius = ALIRADIUS;
-    let coh_strength = COHSTRENGTH;
-    let coh_radius = COHRADIUS;
-    let grid = false;
-    let trail = false;
-
-    Model {
-        boids,
-        qtree,
-        ui,
-        ids,
-        sep_strength,
-        sep_radius,
-        ali_strength,
-        ali_radius,
-        coh_strength,
-        coh_radius,
-        grid,
-        trail,
-    }
+    Model::new(boids, ui, ids)
 }
 
 fn update(app: &App, m: &mut Model, _update: Update) {
@@ -208,13 +204,13 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         .border(0.0)
         .set(m.ids.reset, ui)
     {
-        m.sep_strength = 1.5;
-        m.sep_radius = 25.0;
-        m.ali_strength = 1.0;
-        m.ali_radius = 75.0;
-        m.coh_strength = 1.0;
-        m.coh_radius = 100.0;
-        m.boids = boids_circle(m.boids.len(), 200.0);
+        m.sep_strength = SEPSTRENGTH;
+        m.sep_radius = SEPRADIUS;
+        m.ali_strength = ALISTRENGTH;
+        m.ali_radius = ALIRADIUS;
+        m.coh_strength = COHSTRENGTH;
+        m.coh_radius = COHRADIUS;
+        m.boids = boids_circle(m.boids.len(), CIRCLE);
         m.boids[0].highlight = true;
     }
 
@@ -291,7 +287,7 @@ fn view(app: &App, m: &Model, frame: Frame) {
     if m.trail {
         draw.rect()
             .wh(app.window_rect().wh())
-            .color(srgba(0., 0., 0., 0.05));
+            .color(srgba(0.0, 0.0, 0.0, 0.05));
     } else {
         draw.background().color(BLACK);
     }
@@ -300,7 +296,7 @@ fn view(app: &App, m: &Model, frame: Frame) {
         draw_qtree(m.qtree.clone(), bl, tr, &draw);
     }
     for boid in &m.boids {
-        display(&boid, &draw, &m);
+        draw_boid(&boid, &draw, &m);
     }
     draw.to_frame(app, &frame).unwrap();
     m.ui.draw_to_frame(app, &frame).unwrap();
@@ -341,7 +337,7 @@ fn draw_qtree(qtree: Box<QNode<Boid>>, bl: Point2, tr: Point2, draw: &Draw) {
     }
 }
 
-fn display(boid: &Boid, draw: &Draw, m: &Model) {
+fn draw_boid(boid: &Boid, draw: &Draw, m: &Model) {
     let Boid {
         position,
         velocity,
