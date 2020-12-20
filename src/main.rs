@@ -1,7 +1,7 @@
 mod boid;
 mod quadtree;
 
-use nannou::prelude::*;
+use nannou::{prelude::*, ui::Color};
 use nannou::ui::prelude::*;
 use nannou::Draw;
 
@@ -18,6 +18,8 @@ const ALISTRENGTH: f32 = 1.0;
 const ALIRADIUS: f32 = 75.0;
 const COHSTRENGTH: f32 = 1.0;
 const COHRADIUS: f32 = 100.0;
+
+const LABELCOLOR: Color = Color::Rgba(0.83, 0.83, 0.85, 1.0);
 
 fn main() {
     nannou::app(model).update(update).run();
@@ -112,7 +114,7 @@ fn update(app: &App, m: &mut Model, _update: Update) {
             .w_h(150.0, 24.0)
             .label_font_size(12)
             .rgb(0.29, 0.53, 0.64)
-            .label_rgb(0.83, 0.83, 0.85)
+            .label_color(LABELCOLOR)
             .border(0.5)
             .border_rgb(37. / 255., 0.15, 0.15)
     }
@@ -200,7 +202,7 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         .label("Reset")
         .label_font_size(12)
         .rgb(0.15, 0.15, 0.15)
-        .label_rgb(0.83, 0.83, 0.85)
+        .label_color(LABELCOLOR)
         .border(0.0)
         .set(m.ids.reset, ui)
     {
@@ -221,7 +223,7 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         .label(grid_label)
         .label_font_size(12)
         .rgb(0.15, 0.15, 0.15)
-        .label_rgb(0.83, 0.83, 0.85)
+        .label_color(LABELCOLOR)
         .border(0.0)
         .set(m.ids.grid, ui)
     {
@@ -235,7 +237,7 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         .label(trail_label)
         .label_font_size(12)
         .rgb(0.15, 0.15, 0.15)
-        .label_rgb(0.83, 0.83, 0.85)
+        .label_color(LABELCOLOR)
         .border(0.0)
         .set(m.ids.trail, ui)
     {
@@ -247,8 +249,7 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         .bottom_left_with_margin(20.0)
         .w_h(150.0, 30.0)
         .font_size(12)
-        .text_color(srgba(0.83, 0.83, 0.85, 1.0))
-        // .text_color(color::Color::Rgba(0.83, 0.83, 0.85, 1.0))
+        .text_color(LABELCOLOR)
         .rgb(0.0, 0.0, 0.0)
         .set(m.ids.fps, ui);
 
