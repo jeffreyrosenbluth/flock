@@ -1,6 +1,6 @@
 use nannou::prelude::*;
 
-const CAPACITY: usize = 64;
+const CAPACITY: usize = 2;
 
 pub fn blq(bl: Point2, tr: Point2) -> (Point2, Point2) {
     (bl, (bl + tr) / 2.0)

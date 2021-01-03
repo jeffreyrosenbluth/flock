@@ -1,6 +1,7 @@
 mod boid;
 mod quadtree;
 
+use nannou::color::{white_point::D65, Alpha, Lab, Laba};
 use nannou::prelude::*;
 use nannou::ui::prelude::*;
 use nannou::Draw;
@@ -10,7 +11,7 @@ use crate::quadtree::*;
 
 const WIDTH: u32 = 1500;
 const HEIGHT: u32 = 1000;
-const COUNT: usize = 1000;
+const COUNT: usize = 600;
 const CIRCLE: f32 = 200.0;
 const SEPSTRENGTH: f32 = 1.5;
 const SEPRADIUS: f32 = 25.0;
@@ -18,6 +19,19 @@ const ALISTRENGTH: f32 = 1.0;
 const ALIRADIUS: f32 = 75.0;
 const COHSTRENGTH: f32 = 1.0;
 const COHRADIUS: f32 = 100.0;
+
+const COLORS: Vec<Srgb<u8>> = vec![
+    srgb8(3, 7, 30),
+    srgb8(55, 6, 23),
+    srgb8(106, 4, 15),
+    srgb8(157, 2, 8),
+    srgb8(208, 0, 0),
+    srgb8(220, 47, 2),
+    srgb8(232, 93, 4),
+    srgb8(244, 140, 6),
+    srgb8(250, 163, 7),
+    srgb8(255, 186, 8),
+];
 
 fn main() {
     nannou::app(model).update(update).run();
@@ -34,7 +48,6 @@ struct Model {
     ali_radius: f32,
     coh_strength: f32,
     coh_radius: f32,
-    grid: bool,
     trail: bool,
 }
 
@@ -51,7 +64,6 @@ impl Model {
             ali_radius: ALIRADIUS,
             coh_strength: COHSTRENGTH,
             coh_radius: COHRADIUS,
-            grid: false,
             trail: false,
         }
     }
@@ -66,7 +78,6 @@ widget_ids! {
         coh_strength,
         coh_radius,
         reset,
-        grid,
         fps,
         count,
         trail,
@@ -214,20 +225,6 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         m.boids[0].highlight = true;
     }
 
-    let grid_label = if m.grid { "Grid Off" } else { "Grid On" };
-    for _click in widget::Button::new()
-        .down(10.0)
-        .w_h(150.0, 30.0)
-        .label(grid_label)
-        .label_font_size(12)
-        .rgb(0.15, 0.15, 0.15)
-        .label_rgb(0.83, 0.83, 0.85)
-        .border(0.0)
-        .set(m.ids.grid, ui)
-    {
-        m.grid = !m.grid
-    }
-
     let trail_label = if m.trail { "Trail Off" } else { "Trail On" };
     for _click in widget::Button::new()
         .down(10.0)
@@ -247,8 +244,7 @@ fn update(app: &App, m: &mut Model, _update: Update) {
         .bottom_left_with_margin(20.0)
         .w_h(150.0, 30.0)
         .font_size(12)
-        .text_color(srgba(0.83, 0.83, 0.85, 1.0))
-        // .text_color(color::Color::Rgba(0.83, 0.83, 0.85, 1.0))
+        .text_color(color::Color::Rgba(0.83, 0.83, 0.85, 1.0))
         .rgb(0.0, 0.0, 0.0)
         .set(m.ids.fps, ui);
 
@@ -285,21 +281,22 @@ fn view(app: &App, m: &Model, frame: Frame) {
     let bl = app.window_rect().bottom_left();
     let tr = app.window_rect().top_right();
     let draw = app.draw();
+    draw.background().color(BLACK);
     if m.trail {
         draw.rect()
             .wh(app.window_rect().wh())
-            .color(srgba(0.0, 0.0, 0.0, 0.05));
+            .color(srgba(0.0, 0.0, 0.0, 0.5));
     } else {
-        draw.background().color(BLACK);
+        // draw.background().color(BLUE);
     }
 
-    if m.grid {
-        draw_qtree(m.qtree.clone(), bl, tr, &draw);
-    }
-    for boid in &m.boids {
-        draw_boid(&boid, &draw, &m);
-    }
+    draw_qtree(m.qtree.clone(), bl, tr, &draw);
+    // for boid in &m.boids {
+    //     draw_boid(&boid, &draw, &m);
+    // }
     draw.to_frame(app, &frame).unwrap();
+    // let file_path = gif_path(app, &frame);
+    // app.main_window().capture_frame(file_path);
     m.ui.draw_to_frame(app, &frame).unwrap();
 }
 
@@ -309,13 +306,8 @@ fn centered_rect(bl: Point2, tr: Point2) -> (Point2, Point2) {
 
 fn draw_rect(bl: Point2, tr: Point2, draw: &Draw) {
     let (ctr, dims) = centered_rect(bl, tr);
-    let clear = srgba(0.0, 0.0, 0.0, 0.0);
-    draw.rect()
-        .xy(ctr)
-        .wh(dims)
-        .color(clear)
-        .stroke_color(rgb8(37, 38, 39))
-        .stroke_weight(1.0);
+    let k = (dims.x / WIDTH as f32 * 15.0) as usize;
+    draw.rect().xy(ctr).wh(dims).color(COLORS[k]);
 }
 
 fn draw_qtree(qtree: Box<QNode<Boid>>, bl: Point2, tr: Point2, draw: &Draw) {
@@ -338,51 +330,18 @@ fn draw_qtree(qtree: Box<QNode<Boid>>, bl: Point2, tr: Point2, draw: &Draw) {
     }
 }
 
-fn draw_boid(boid: &Boid, draw: &Draw, m: &Model) {
-    let Boid {
-        position,
-        velocity,
-        highlight,
-        ..
-    } = boid;
+fn gif_path(app: &App, frame: &Frame) -> std::path::PathBuf {
+    app.project_path()
+        .expect("failed to locate `project_path`")
+        .join(app.exe_name().unwrap())
+        .join(format!("frame_{:03}", frame.nth()))
+        .with_extension("png")
+}
 
-    let theta = velocity.angle() + PI / 2.;
-    let mut c = PLUM;
-    let r = if m.trail { 1.0 } else { 2.0 };
-    let clear = srgba(0.0, 0.0, 0.0, 0.0);
-
-    if *highlight && m.grid && !m.trail {
-        c = WHITE;
-        draw.ellipse()
-            .color(clear)
-            .w_h(m.coh_radius * 2., m.coh_radius * 2.)
-            .xy(*position)
-            .stroke_weight(0.5)
-            .stroke_color(rgb8(211, 212, 217));
-
-        draw.ellipse()
-            .color(clear)
-            .w_h(m.ali_radius * 2., m.ali_radius * 2.)
-            .xy(*position)
-            .stroke_weight(0.5)
-            .stroke_color(rgb8(75, 136, 162));
-
-        draw.ellipse()
-            .color(clear)
-            .w_h(m.sep_radius * 2., m.sep_radius * 2.)
-            .xy(*position)
-            .stroke_weight(0.5)
-            .stroke_color(rgb8(252, 81, 48));
-    }
-    let points = vec![
-        pt2(0., -r * 2.),
-        pt2(-r, r * 2.),
-        pt2(0., r),
-        pt2(r, r * 2.),
-    ];
-    draw.polygon()
-        .points(points)
-        .xy(*position)
-        .color(c)
-        .rotate(theta);
+pub fn random_color() -> Alpha<Lab<D65, f32>, f32> {
+    let l: f32 = random_range(0.0, 100.0);
+    let a: f32 = random_range(-128.0, 127.0);
+    let b: f32 = random_range(-128.0, 127.0);
+    let o: f32 = random_range(0.5, 1.0);
+    Laba::new(l, a, b, o)
 }
