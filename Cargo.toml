@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 nannou = "0.15"
+lazy_static ="1.4"
